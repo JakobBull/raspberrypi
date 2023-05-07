@@ -7,7 +7,6 @@ I2C_SLAVE = 0x0703
 class I2C:
 
     def __init__(self, bus: int, address: int):
-
         self.fr = io.open("/dev/i2c-"+str(bus), "rb", buffering=0)
         self.fw = io.open("/dev/i2c-"+str(bus), "wb", buffering=0)
 

@@ -4,7 +4,7 @@ import logging
 from time import sleep
 from queue import Queue
 from datetime import datetime
-from sps30.i2c import I2C
+from sps30.i2c.i2c import I2C
 
 # I2C commands
 CMD_START_MEASUREMENT = [0x00, 0x10]
@@ -44,6 +44,7 @@ class SPS30:
 
     def __init__(self,  bus: int = 1, address: int = 0x69, sampling_period: int = 1, logger: str = None):
         self.logger = None
+        self.measuring = False
         if logger:
             self.logger = logging.getLogger(logger)
 
@@ -327,6 +328,8 @@ class SPS30:
 
     def __read_measured_value(self) -> None:
         while True:
+            if not self.measuring:
+                return
             try:
                 if not self.read_data_ready_flag():
                     continue
@@ -368,8 +371,10 @@ class SPS30:
 
             finally:
                 sleep(self.sampling_period)
+                
 
     def start_measurement(self) -> None:
+        self.measuring = True
         data_format = {
             "IEEE754_float": 0x03,
             "unsigned_16_bit_integer": 0x05
@@ -389,6 +394,7 @@ class SPS30:
         return self.__data.get()
 
     def stop_measurement(self) -> None:
+        self.measuring = False
         self.i2c.write(CMD_STOP_MEASUREMENT)
         self.i2c.close()
 

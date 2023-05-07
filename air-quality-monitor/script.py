@@ -3,7 +3,7 @@ from datetime import datetime
 import sys
 import json
 from time import sleep
-from sps30.sps30 import SPS30
+from sps30 import SPS30
 
 file_names = {"mass_density": ["pm1.0", "pm2.5", "pm4.0", "pm10"],
               "particle_count": ["pm0.5", "pm1.0", "pm2.5", "pm4.0", "pm10"]}
