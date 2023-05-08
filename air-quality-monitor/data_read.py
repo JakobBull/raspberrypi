@@ -145,7 +145,6 @@ def write_to_file(aqi, window, path='air_data.csv'):
         del pollution_forecast["0"]
         for integer in range(1, 91):
             data_dict[str(integer)] = pollution_forecast[str(integer)]
-        print(data_dict, field_names)
         dictwriter_object = DictWriter(f_object, fieldnames=field_names)
         # Pass the dictionary as an argument to the Writerow()
         dictwriter_object.writerow(data_dict)
