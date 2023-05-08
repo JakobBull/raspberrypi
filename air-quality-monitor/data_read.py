@@ -70,8 +70,9 @@ def connect_serial(ports=['ttyACM0', 'ttyACM1']):
             print(f'Port {port} unavailable.')
     return None
 
-def serial_read(connection, window_resistance, n=20):
+def serial_read(connection, window_resistance, n=5):
     ser = None
+    print('Serial read...')
     for _ in range(n+1):
         try:
             value = None
@@ -86,10 +87,12 @@ def serial_read(connection, window_resistance, n=20):
         except serial.serialutil.SerialException:
             ser = connect_serial()
         time.sleep(1)
+    print('Serial read terminated...')
     window_resistance.pop(0)
     connection.send(window_resistance)
 
-def sps_read(connection, aqi_list, n=20):
+def sps_read(connection, aqi_list, n=5):
+    print("SPS read...")
     pm_sensor = SPS30()
     pm_sensor.start_measurement()
     for _ in range(n+1):
@@ -107,6 +110,7 @@ def sps_read(connection, aqi_list, n=20):
             pm_sensor.stop_measurement()
             sys.exit() 
         time.sleep(1)
+    print("SPS read terminated...")
     pm_sensor.stop_measurement()
     aqi_list.pop(0)
     connection.send(aqi_list)
@@ -141,6 +145,7 @@ def write_to_file(aqi, window, path='air_data.csv'):
         del pollution_forecast["0"]
         for integer in range(1, 91):
             data_dict[str(integer)] = pollution_forecast[str(integer)]
+        print(data_dict, field_names)
         dictwriter_object = DictWriter(f_object, fieldnames=field_names)
         # Pass the dictionary as an argument to the Writerow()
         dictwriter_object.writerow(data_dict)
