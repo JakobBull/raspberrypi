@@ -133,17 +133,17 @@ def fetch_pollution():
     aqis = {to_hours((datetime.fromtimestamp(item['dt'])-start_time)): get_aqi(item['components']) for item in data.json()["list"]}
     return aqis
 
-def write_to_file(aqi, window, path='air_data.csv'):
+def write_to_file(aqi, window, path='/home/jakob/Documents/raspberrypi/air-quality-monitor/air_data.csv'):
     with open(path, 'a') as f_object:
         data_dict = {}
-        field_names = ['timestamp', 'AQI', 'Window open', 'Outside AQI'] + [str(integer) for integer in range(1, 91)]
+        field_names = ['timestamp', 'AQI', 'Window open', 'Outside AQI'] + [str(integer) for integer in range(1, 73)]
         data_dict['timestamp'] = str(datetime.now())
         data_dict['AQI'] = str(aqi)
         data_dict['Window open'] = str(window < 50)
         pollution_forecast = fetch_pollution()
         data_dict['Outside AQI'] = pollution_forecast["0"]
         del pollution_forecast["0"]
-        for integer in range(1, 91):
+        for integer in range(1, 73):
             data_dict[str(integer)] = pollution_forecast[str(integer)]
         dictwriter_object = DictWriter(f_object, fieldnames=field_names)
         # Pass the dictionary as an argument to the Writerow()
