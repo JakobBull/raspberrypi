@@ -118,26 +118,28 @@ def get_aqi(item):
                         ]))
 
 def to_hours(time_object):
-    return int(time_object.days*24 + time_object.seconds/3600)
+    return str(int(time_object.days*24 + time_object.seconds/3600))
 
 def fetch_pollution():
     req = "http://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=39.99&lon=116.00&appid=af626fa02cd89c7f464a9f2b9bbbe3e9"
+    print("Fetching...")
     data = requests.get(req)
-    start_time = datetime.datetime.fromtimestamp(data.json()["list"][0]['dt'])
-    aqis = {to_hours((datetime.datetime.fromtimestamp(item['dt'])-start_time)): get_aqi(item['components']) for item in data.json()["list"]}
+    print("Fetched...")
+    start_time = datetime.fromtimestamp(data.json()["list"][0]['dt'])
+    aqis = {to_hours((datetime.fromtimestamp(item['dt'])-start_time)): get_aqi(item['components']) for item in data.json()["list"]}
     return aqis
 
 def write_to_file(aqi, window, path='air_data.csv'):
     with open(path, 'a') as f_object:
         data_dict = {}
-        field_names = ['timestamp', 'AQI', 'Window open', 'Outside AQI'] + [str(integer) for integer in range(1, 93)]
+        field_names = ['timestamp', 'AQI', 'Window open', 'Outside AQI'] + [str(integer) for integer in range(1, 91)]
         data_dict['timestamp'] = str(datetime.now())
         data_dict['AQI'] = str(aqi)
         data_dict['Window open'] = str(window < 50)
         pollution_forecast = fetch_pollution()
         data_dict['Outside AQI'] = pollution_forecast["0"]
         del pollution_forecast["0"]
-        for integer in range(1, 93):
+        for integer in range(1, 91):
             data_dict[str(integer)] = pollution_forecast[str(integer)]
         dictwriter_object = DictWriter(f_object, fieldnames=field_names)
         # Pass the dictionary as an argument to the Writerow()
@@ -149,7 +151,8 @@ def main():
     global window_resistance
     global aqi_list
     print("Initialising...")
-    setup()
+    GPIO.output(13, GPIO.HIGH)
+    #setup()
     conn11, conn12 = multiprocessing.Pipe()
     conn21, conn22 = multiprocessing.Pipe()
     p1 = multiprocessing.Process(target=serial_read, args=(conn12, window_resistance,))
@@ -160,7 +163,7 @@ def main():
     aqi_list = conn21.recv()
     p1.join()
     p2.join()
-    close_down()
+    #close_down()
     w =  int(statistics.median(window_resistance))
     aqi =  int(statistics.median(aqi_list))
     write_to_file(aqi, w)
