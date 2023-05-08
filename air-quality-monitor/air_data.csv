@@ -1,3 +1,1 @@
 timestamp,AQI,Window open,Outside AQI
-2023-05-07 14:32:20.896198,5,True,<function fetch_pollution at 0xf6a7dec8>
-2023-05-07 14:34:11.273846,9,True,<function fetch_pollution at 0xf6a0fec8>

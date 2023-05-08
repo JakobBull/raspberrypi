@@ -127,7 +127,7 @@ def write_to_file(aqi, window, path='air_data.csv'):
         data_dict['timestamp'] = str(datetime.now())
         data_dict['AQI'] = str(aqi)
         data_dict['Window open'] = str(window < 50)
-        data_dict['Outside AQI'] = fetch_pollution
+        data_dict['Outside AQI'] = fetch_pollution()
         dictwriter_object = DictWriter(f_object, fieldnames=field_names)
         # Pass the dictionary as an argument to the Writerow()
         dictwriter_object.writerow(data_dict)
