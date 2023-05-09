@@ -91,7 +91,7 @@ def serial_read(connection, window_resistance, n=5):
     window_resistance.pop(0)
     connection.send(window_resistance)
 
-def sps_read(connection, aqi_list, n=5):
+def sps_read(connection, aqi_list, n=20):
     print("SPS read...")
     pm_sensor = SPS30()
     pm_sensor.start_measurement()
