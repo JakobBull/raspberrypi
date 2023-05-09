@@ -24,9 +24,9 @@ GPIO.setup(13, GPIO.OUT)
 
 arduino_mode = True
 
-global window_resistance
+global data_dict
 global aqi_list
-window_resistance = []
+data_dict = {'Pressure': [], 'CO2': [], 'TVOC': []}
 aqi_list = []
 
 
@@ -70,26 +70,30 @@ def connect_serial(ports=['ttyACM0', 'ttyACM1']):
             print(f'Port {port} unavailable.')
     return None
 
-def serial_read(connection, window_resistance, n=5):
+def serial_read(connection, data_dict = {'Pressure': [], 'CO2': [], 'TVOC': []}, n=5):
     ser = None
     print('Serial read...')
-    for _ in range(n+1):
-        try:
-            value = None
-            while not value:
-                if ser:
-                    reading = ser.readline().decode('utf8')
-                    value = re.search('[0-9]+', reading)
-                else:
-                    time.sleep(0.1)
-                    ser=connect_serial()
-            window_resistance.append(int(value.group()))
-        except serial.serialutil.SerialException:
-            ser = connect_serial()
-        time.sleep(1)
+    enough_readings = False
+    while not enough_readings:
+        if ser:
+            reading = ser.readline().decode('utf8')
+            match = lambda key, text: re.search(f'{key} - (.+?);', text)
+            for pollutant in data_dict.keys():
+                match_obj = match(pollutant, reading)
+                if match_obj:
+                    found = match_obj.group(1)
+                    if len(data_dict[pollutant]) < n+1:
+                        data_dict[pollutant].append(int(found))
+                    else:
+                        sufficient_lengths = [(len(data_dict[pollutant]) == n+1) for pollutant in data_dict.keys()]
+                        enough_readings = True if all(sufficient_lengths) else False
+        else:
+            time.sleep(0.1)
+            ser=connect_serial()
+    time.sleep(1)
     print('Serial read terminated...')
-    window_resistance.pop(0)
-    connection.send(window_resistance)
+    data_dict = {key: data_dict[key][1:] for key in data_dict.keys()}
+    connection.send(data_dict)
 
 def sps_read(connection, aqi_list, n=20):
     print("SPS read...")
@@ -133,13 +137,15 @@ def fetch_pollution():
     aqis = {to_hours((datetime.fromtimestamp(item['dt'])-start_time)): get_aqi(item['components']) for item in data.json()["list"]}
     return aqis
 
-def write_to_file(aqi, window, path='/home/jakob/Documents/raspberrypi/air-quality-monitor/air_data.csv'):
+def write_to_file(aqi, resistance, co2, tvoc, path='/home/jakob/Documents/raspberrypi/air-quality-monitor/air_data.csv'):
     with open(path, 'a') as f_object:
         data_dict = {}
-        field_names = ['timestamp', 'AQI', 'Window open', 'Outside AQI'] + [str(integer) for integer in range(1, 73)]
+        field_names = ['timestamp', 'AQI', 'Window open', 'CO2', 'TVOC', 'Outside AQI'] + [str(integer) for integer in range(1, 73)]
         data_dict['timestamp'] = str(datetime.now())
         data_dict['AQI'] = str(aqi)
-        data_dict['Window open'] = str(window < 50)
+        data_dict['Window open'] = str(resistance < 50)
+        data_dict['CO2'] = co2
+        data_dict['TVOC'] = tvoc
         pollution_forecast = fetch_pollution()
         data_dict['Outside AQI'] = pollution_forecast["0"]
         del pollution_forecast["0"]
@@ -152,24 +158,26 @@ def write_to_file(aqi, window, path='/home/jakob/Documents/raspberrypi/air-quali
         f_object.close()
 
 def main():
-    global window_resistance
+    global data_dict
     global aqi_list
     print("Initialising...")
     GPIO.output(13, GPIO.HIGH)
     #setup()
     conn11, conn12 = multiprocessing.Pipe()
     conn21, conn22 = multiprocessing.Pipe()
-    p1 = multiprocessing.Process(target=serial_read, args=(conn12, window_resistance,))
+    p1 = multiprocessing.Process(target=serial_read, args=(conn12, data_dict,))
     p2 = multiprocessing.Process(target=sps_read, args=(conn22, aqi_list,))
     p1.start()
     p2.start()
-    window_resistance = conn11.recv()
+    data_dict = conn11.recv()
     aqi_list = conn21.recv()
     p1.join()
     p2.join()
     #close_down()
-    w =  int(statistics.median(window_resistance))
+    resistance = int(statistics.median(data_dict['Pressure']))
+    co2 = int(statistics.median(data_dict['CO2']))
+    tvoc = int(statistics.median(data_dict['TVOC']))
     aqi =  int(statistics.median(aqi_list))
-    write_to_file(aqi, w)
+    write_to_file(aqi, resistance, co2, tvoc)
     print("Done.")    
 main()

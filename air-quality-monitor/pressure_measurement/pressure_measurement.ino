@@ -1,27 +1,33 @@
+#include "SparkFun_SGP30_Arduino_Library.h"
+#include <Wire.h>
+
 int fsrPin = 1;
 int fsrReading;
+SGP30 mySensor;
 
 void setup(void) {
   Serial.begin(9600);
+  Wire.begin();
+  if (mySensor.begin() == false) {
+    Serial.println("No SGP30 detected. Check connections.");
+    while (1);}
+  mySensor.initAirQuality();
   Serial.println("Setup complete.");
 }
 
 void loop(void) {
   fsrReading = analogRead(fsrPin);
 
-  Serial.print("Analog reading = ");
+  Serial.print("Pressure - ");
   Serial.print(fsrReading);
+  Serial.println(";");
 
-  if (fsrReading < 10) {
-    Serial.println(" - No pressure");
-  } else if (fsrReading < 200) {
-    Serial.println(" - Light touch");
-  } else if (fsrReading < 500) {
-    Serial.println(" - Light squeeze");
-  } else if (fsrReading < 800) {
-    Serial.println(" - Medium squeeze");
-  } else {
-    Serial.println(" - Big squeeze");
-  }
+  mySensor.measureAirQuality();
+  Serial.print("CO2 - ");
+  Serial.print(mySensor.CO2);
+  Serial.println(";");
+  Serial.print("TVOC - ");
+  Serial.print(mySensor.TVOC);
+  Serial.println(";");
   delay(1000);
 }
