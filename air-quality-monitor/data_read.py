@@ -82,17 +82,17 @@ def serial_read(connection, data_dict = {'Pressure': [], 'CO2': [], 'TVOC': []},
                 match_obj = match(pollutant, reading)
                 if match_obj:
                     found = match_obj.group(1)
-                    if len(data_dict[pollutant]) < n+1:
+                    if len(data_dict[pollutant]) < n+25:
                         data_dict[pollutant].append(int(found))
                     else:
-                        sufficient_lengths = [(len(data_dict[pollutant]) == n+1) for pollutant in data_dict.keys()]
+                        sufficient_lengths = [(len(data_dict[pollutant]) == n+25) for pollutant in data_dict.keys()]
                         enough_readings = True if all(sufficient_lengths) else False
         else:
             time.sleep(0.1)
             ser=connect_serial()
     time.sleep(1)
     print('Serial read terminated...')
-    data_dict = {key: data_dict[key][1:] for key in data_dict.keys()}
+    data_dict = {key: data_dict[key][25:] for key in data_dict.keys()}
     connection.send(data_dict)
 
 def sps_read(connection, aqi_list, n=20):
@@ -178,6 +178,7 @@ def main():
     co2 = int(statistics.median(data_dict['CO2']))
     tvoc = int(statistics.median(data_dict['TVOC']))
     aqi =  int(statistics.median(aqi_list))
+    print("Writing to file...")
     write_to_file(aqi, resistance, co2, tvoc)
-    print("Done.")    
+    print("Done.")
 main()
