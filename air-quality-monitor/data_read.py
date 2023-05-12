@@ -143,7 +143,7 @@ def fetch_weather():
     data = requests.get(req).json()
     print("Fetched...")
     wind_speed = data["wind"]["speed"]
-    wind_dir = data["wind"]["dir"]
+    wind_dir = data["wind"]["deg"]
     wind_gust = data["wind"]["gust"]
     return wind_speed, wind_dir, wind_gust
 
