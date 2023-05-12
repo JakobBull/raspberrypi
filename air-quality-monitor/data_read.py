@@ -142,13 +142,10 @@ def fetch_weather():
     print("Fetching...")
     data = requests.get(req).json()
     print("Fetched...")
-    wind_speed = data["wind"]["windspeed"]
+    wind_speed = data["wind"]["speed"]
     wind_dir = data["wind"]["dir"]
     wind_gust = data["wind"]["gust"]
     return wind_speed, wind_dir, wind_gust
-
-
-
 
 def write_to_file(aqi, resistance, co2, tvoc, path='/home/jakob/Documents/raspberrypi/air-quality-monitor/air_data.csv'):
     with open(path, 'a') as f_object:
