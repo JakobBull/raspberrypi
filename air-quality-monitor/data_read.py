@@ -129,7 +129,7 @@ def to_hours(time_object):
     return str(int(time_object.days*24 + time_object.seconds/3600))
 
 def fetch_pollution():
-    req = "http://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=39.99&lon=116.00&appid=af626fa02cd89c7f464a9f2b9bbbe3e9"
+    req = f"http://api.openweathermap.org/data/2.5/air_pollution/forecast?lat={current_geolocation['latitude']}&lon={current_geolocation['longitude']}&appid={openweather_api_key}"
     print("Fetching...")
     data = requests.get(req)
     print("Fetched...")
@@ -137,10 +137,20 @@ def fetch_pollution():
     aqis = {to_hours((datetime.fromtimestamp(item['dt'])-start_time)): get_aqi(item['components']) for item in data.json()["list"]}
     return aqis
 
+def fetch_weather():
+    req  = f"https://api.openweathermap.org/data/2.5/weather?lat={current_geolocation['latitude']}&lon={current_geolocation['longitude']}&appid={openweather_api_key}"
+    print("Fetching...")
+    data = requests.get(req).json()
+    print("Fetched...")
+    wind_speed = data["wind"]["speed"]
+    wind_dir = data["wind"]["deg"]
+    wind_gust = data["wind"]["gust"]
+    return wind_speed, wind_dir, wind_gust
+
 def write_to_file(aqi, resistance, co2, tvoc, path='/home/jakob/Documents/raspberrypi/air-quality-monitor/air_data.csv'):
     with open(path, 'a') as f_object:
         data_dict = {}
-        field_names = ['timestamp', 'AQI', 'Window open', 'CO2', 'TVOC', 'Outside AQI'] + [str(integer) for integer in range(1, 73)]
+        field_names = ['timestamp', 'AQI', 'Window open', 'CO2', 'TVOC', 'Outside AQI'] + [str(integer) for integer in range(1, 73)] + ['Wind speed', "Wind direction", "Wind direction"]
         data_dict['timestamp'] = str(datetime.now())
         data_dict['AQI'] = str(aqi)
         data_dict['Window open'] = str(resistance < 50)
@@ -151,6 +161,10 @@ def write_to_file(aqi, resistance, co2, tvoc, path='/home/jakob/Documents/raspbe
         del pollution_forecast["0"]
         for integer in range(1, 73):
             data_dict[str(integer)] = pollution_forecast[str(integer)]
+        wind_speed, wind_dir, wind_gust = fetch_weather()
+        data_dict["Wind speed"] = wind_speed
+        data_dict["Wind direcion"] = wind_dir
+        data_dict["Wind gust"] = wind_gust
         dictwriter_object = DictWriter(f_object, fieldnames=field_names)
         # Pass the dictionary as an argument to the Writerow()
         dictwriter_object.writerow(data_dict)
