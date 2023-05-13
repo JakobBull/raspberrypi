@@ -150,7 +150,7 @@ def fetch_weather():
 def write_to_file(aqi, resistance, co2, tvoc, path='/home/jakob/Documents/raspberrypi/air-quality-monitor/air_data.csv'):
     with open(path, 'a') as f_object:
         data_dict = {}
-        field_names = ['timestamp', 'AQI', 'Window open', 'CO2', 'TVOC', 'Outside AQI'] + [str(integer) for integer in range(1, 73)] + ['Wind speed', "Wind direction", "Wind direction"]
+        field_names = ['timestamp', 'AQI', 'Window open', 'CO2', 'TVOC', 'Outside AQI'] + [str(integer) for integer in range(1, 73)] + ['Wind speed', "Wind direction", "Wind gust"]
         data_dict['timestamp'] = str(datetime.now())
         data_dict['AQI'] = str(aqi)
         data_dict['Window open'] = str(resistance < 50)
@@ -163,7 +163,7 @@ def write_to_file(aqi, resistance, co2, tvoc, path='/home/jakob/Documents/raspbe
             data_dict[str(integer)] = pollution_forecast[str(integer)]
         wind_speed, wind_dir, wind_gust = fetch_weather()
         data_dict["Wind speed"] = wind_speed
-        data_dict["Wind direcion"] = wind_dir
+        data_dict["Wind direction"] = wind_dir
         data_dict["Wind gust"] = wind_gust
         dictwriter_object = DictWriter(f_object, fieldnames=field_names)
         # Pass the dictionary as an argument to the Writerow()
